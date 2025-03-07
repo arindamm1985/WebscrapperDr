@@ -11,6 +11,8 @@ import string
 from flask import Flask, request, jsonify
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 app = FastAPI() 
+class FetchRequest(BaseModel):
+    website_url: str
 def fetch_meta_data(url):
     """Fetch the title, meta description, and meta keywords from a website."""
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -80,13 +82,13 @@ def get_google_ranking(keyword, domain, num_results=20):
     except Exception as e:
         return f"Error: {e}"
 
-@app.route("/api/fetch", methods=["POST"])
-async def fetch():
-    data = request.get_json()
+@app.post("/api/fetch")
+def extract(req: FetchRequest):
+   
     if not data or "website_url" not in data:
         return jsonify({"error": "Please provide a 'website_url' in JSON payload."}), 400
 
-    website_url = data["website_url"]
+    website_url = req.website_url
     
     try:
         # Fetch meta data

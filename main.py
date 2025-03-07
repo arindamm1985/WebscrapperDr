@@ -57,7 +57,7 @@ def get_google_ranking(keyword, domain, num_results=20):
     of the website (if found within the top num_results).
     """
     try:
-        results = list(search(keyword, num_results=num_results, stop=num_results, pause=2))
+        results = list(search(keyword, num_results=num_results))
         for idx, result in enumerate(results):
             if domain in result:
                 return idx + 1  # Rankings are 1-indexed

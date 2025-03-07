@@ -5,6 +5,7 @@ import uvicorn
 from bs4 import BeautifulSoup
 from googlesearch import search  # Install with: pip install google
 import re
+from pydantic import BaseModel 
 from openai import OpenAI
 from collections import Counter
 import string

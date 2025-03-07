@@ -1,4 +1,5 @@
 import requests
+from fastapi import FastAPI, Header, HTTPException
 import os
 from bs4 import BeautifulSoup
 from googlesearch import search  # Install with: pip install google
@@ -118,5 +119,4 @@ def fetch():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    # Run the Flask app on port 5000 (default) with debug mode on
-    app.run(debug=True)
+   uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 10000)))

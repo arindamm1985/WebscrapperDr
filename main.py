@@ -5,7 +5,7 @@ import re
 import openai
 from collections import Counter
 import string
-
+openai.api_key = os.getenv("OPENAI_API_KEY")
 def fetch_meta_data(url):
     """Fetch the title, meta description, and meta keywords from a website."""
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -39,28 +39,25 @@ stopwords = {
 
 def extract_keywords_openai(text, top_n=5):
     """
-    Uses OpenAI's GPT to extract the top N relevant keywords from the provided text.
-    Returns a list of keywords.
+    Uses OpenAI's standard Completion API to extract the top N relevant keywords
+    from the provided text. Returns a list of keywords.
     """
     prompt = (
-        f"Extract the top {top_n} relevant keywords from the text below. "
+        f"Extract the top {top_n} relevant keywords from the following text. "
         "Return the keywords as a comma-separated list.\n\n"
-        f"{text}\n\n"
-        "Keywords:"
+        f"{text}\n\nKeywords:"
     )
     
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are an assistant that extracts keywords from text."},
-                {"role": "user", "content": prompt},
-            ],
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
             temperature=0.3,
             max_tokens=60,
+            n=1
         )
-        keywords_str = response.choices[0].message.content.strip()
-        # Split by comma and remove extra whitespace
+        keywords_str = response.choices[0].text.strip()
+        # Split the comma-separated response into a list of keywords
         keywords = [k.strip() for k in keywords_str.split(",") if k.strip()]
         return keywords
     except Exception as e:

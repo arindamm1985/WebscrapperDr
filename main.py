@@ -85,9 +85,7 @@ def get_google_ranking(keyword, domain, num_results=20):
 
 @app.post("/api/fetch")
 def extract(req: FetchRequest):
-   
-    if not data or "website_url" not in data:
-        return jsonify({"error": "Please provide a 'website_url' in JSON payload."}), 400
+
 
     website_url = req.website_url
     

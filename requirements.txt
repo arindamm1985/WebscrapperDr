@@ -6,3 +6,4 @@ Flask
 fastapi
 uvicorn[standard]
 python-dotenv
+pydantic

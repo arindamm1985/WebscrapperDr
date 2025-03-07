@@ -47,12 +47,16 @@ stopwords = {
 
 def extract_keywords_openai(text, top_n=5):
     """
-    Uses OpenAI's standard Completion API to extract the top N relevant keywords
-    from the provided text. Returns a list of keywords.
+    Uses OpenAI's GPT to extract the top N relevant keywords from the provided text.
+    The text is assumed to be derived from the website's meta title and meta keywords tags.
+    Note: these tags may already contain keywords separated by commas or pipes.
+    Returns a list of keywords.
     """
     prompt = (
         f"Extract the top {top_n} relevant keywords from the following text. "
-        "Return the keywords as a comma-separated list.\n\n"
+        "Note that the text is derived from a website's meta title and meta keywords tags, "
+        "and it may already include keywords separated by commas or pipes. "
+        "Return the keywords as a comma-separated list, ensuring no duplicates.\n\n"
         f"{text}\n\nKeywords:"
     )
     

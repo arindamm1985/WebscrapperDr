@@ -116,9 +116,9 @@ def extract(req: FetchRequest):
             "top_keywords": top_keywords,
             "rankings": results
         }
-        return jsonify(response_payload)
+        return response_payload
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return {"error": str(e)}
 
 if __name__ == "__main__":
    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 10000)))

@@ -46,25 +46,25 @@ def extract_keywords(title, meta_keywords):
     2. Splits the meta keywords by commas.
     3. Combines and returns a unique list of keywords.
     """
-    keywords = set()
+    keywords = []
     
     # Process title: split by '|' then by ','
     if title:
         for part in title.split("|"):
             for subpart in part.split(","):
                 keyword = subpart.strip()
-                if keyword:
-                    keywords.add(keyword)
+                if keyword and keyword not in keywords:
+                    keywords.append(keyword)
                     
     # Process meta keywords: split by ','
     if meta_keywords:
         for keyword in meta_keywords.split(","):
             keyword = keyword.strip()
-            if keyword:
-                keywords.add(keyword)
+            if keyword and keyword not in keywords:
+                keywords.append(keyword)
     
-    return list(keywords)
-
+    return keywords
+    
 def get_google_ranking(keyword, domain, num_results=20):
     """
     Searches Google for the given keyword and returns the ranking position

@@ -1,6 +1,7 @@
 import requests
 from fastapi import FastAPI, Header, HTTPException
 import os
+import uvicorn
 from bs4 import BeautifulSoup
 from googlesearch import search  # Install with: pip install google
 import re

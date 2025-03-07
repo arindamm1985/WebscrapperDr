@@ -15,67 +15,56 @@ app = FastAPI()
 class FetchRequest(BaseModel):
     website_url: str
 def fetch_meta_data(url):
-    """Fetch the title, meta description, and meta keywords from a website."""
+    """
+    Fetches the title and meta keywords from a website.
+    """
     headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, headers=headers, timeout=10)
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+    except Exception as e:
+        raise Exception(f"Error fetching URL: {e}")
     soup = BeautifulSoup(response.text, "html.parser")
     
     # Extract title
     title_tag = soup.find("title")
     title = title_tag.text.strip() if title_tag else ""
     
-    # Extract meta description
-    description = ""
-    meta_desc = soup.find("meta", attrs={"name": "description"})
-    if meta_desc and meta_desc.get("content"):
-        description = meta_desc["content"].strip()
-    
-    # Extract meta keywords (if available)
+    # Extract meta keywords
     meta_keywords = ""
     meta_kw = soup.find("meta", attrs={"name": "keywords"})
     if meta_kw and meta_kw.get("content"):
         meta_keywords = meta_kw["content"].strip()
     
-    return title, description, meta_keywords
+    return title, meta_keywords
 
-# Define a basic list of stopwords
-stopwords = {
-    "the", "and", "is", "in", "to", "of", "a", "with", "for", "on", "that",
-    "by", "this", "it", "as", "at", "from", "an", "be", "are", "or", "we",
-    "you", "our", "us", "not", "have", "has"
-}
-
-def extract_keywords_openai(text, top_n=5):
+def extract_keywords(title, meta_keywords):
     """
-    Uses OpenAI's GPT to extract the top N relevant keywords from the provided text.
-    The text is derived from a website's meta title and meta keywords tags.
-    When parsing, first check if the title contains the pipe ("|") character and treat each segment as a candidate keyword.
-    Also, consider any keywords present in the meta keywords tag (which may be separated by commas).
-    Return the keywords as a comma-separated list without duplicates.
-    """
-    prompt = (
-        f"Extract the top {top_n} relevant keywords from the following text. "
-        "The text is derived from a website's meta title and meta keywords tags. "
-        "First, if the title contains the pipe ('|') character, treat each segment separated by '|' as a candidate keyword. "
-        "Also, consider any keywords present in the meta keywords tag, which may be separated by commas. "
-        "Parse the full text, extract all potential keywords, and then select the top keywords that best reflect the website's focus. "
-        "Return the keywords as a comma-separated list without duplicates.\n\n"
-        f"{text}\n\nKeywords:"
-    )
+    Extract candidate keywords by splitting the title and meta keywords.
     
-    try:
-        response =openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0
-        )
-        keywords_str = response.choices[0].message.content.strip()
-        # Split the comma-separated response into a list of keywords
-        keywords = [k.strip() for k in keywords_str.split(",") if k.strip()]
-        return keywords
-    except Exception as e:
-        print("Error using OpenAI API:", e)
-        return []
+    1. Splits the title by the pipe ('|') and comma (',') characters.
+    2. Splits the meta keywords by commas.
+    3. Combines and returns a unique list of keywords.
+    """
+    keywords = set()
+    
+    # Process title: split by '|' then by ','
+    if title:
+        for part in title.split("|"):
+            for subpart in part.split(","):
+                keyword = subpart.strip()
+                if keyword:
+                    keywords.add(keyword)
+                    
+    # Process meta keywords: split by ','
+    if meta_keywords:
+        for keyword in meta_keywords.split(","):
+            keyword = keyword.strip()
+            if keyword:
+                keywords.add(keyword)
+    
+    return list(keywords)
+
 def get_google_ranking(keyword, domain, num_results=20):
     """
     Searches Google for the given keyword and returns the ranking position
@@ -113,7 +102,7 @@ def extract(req: FetchRequest):
         combined_text = f"{title} {description} {meta_keywords}"
         
         # Extract top keywords using OpenAI
-        top_keywords = extract_keywords_openai(combined_text, top_n=5)
+        top_keywords = extract_keywords(combined_text, top_n=5)
         
         # Extract the domain (e.g., example.com) from the URL
         domain = re.sub(r'^https?://(www\.)?', '', website_url).split('/')[0]

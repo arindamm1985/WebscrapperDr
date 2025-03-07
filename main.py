@@ -9,7 +9,7 @@ from collections import Counter
 import string
 from flask import Flask, request, jsonify
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-app = Flask(__name__)
+app = FastAPI() 
 def fetch_meta_data(url):
     """Fetch the title, meta description, and meta keywords from a website."""
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -80,7 +80,7 @@ def get_google_ranking(keyword, domain, num_results=20):
         return f"Error: {e}"
 
 @app.route("/api/fetch", methods=["POST"])
-def fetch():
+async def def fetch():
     data = request.get_json()
     if not data or "website_url" not in data:
         return jsonify({"error": "Please provide a 'website_url' in JSON payload."}), 400

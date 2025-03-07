@@ -69,7 +69,7 @@ def extract_keywords_openai(text, top_n=5):
     except Exception as e:
         print("Error using OpenAI API:", e)
         return []
-def get_google_ranking(keyword, domain, num_results=20):
+def get_google_ranking(keyword, domain, num_results=200):
     """
     Searches Google for the given keyword and returns the ranking position
     of the website (if found within the top num_results).

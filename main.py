@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from googlesearch import search  # Install with: pip install google
 import re
+import openai
 from collections import Counter
 import string
 
@@ -36,21 +37,35 @@ stopwords = {
     "you", "our", "us", "not", "have", "has"
 }
 
-def extract_keywords(text, top_n=5):
+def extract_keywords_openai(text, top_n=5):
     """
-    Extracts the top N keywords by frequency from the provided text,
-    excluding common stop words.
+    Uses OpenAI's GPT to extract the top N relevant keywords from the provided text.
+    Returns a list of keywords.
     """
-    # Remove punctuation and tokenize
-    text = text.translate(str.maketrans("", "", string.punctuation))
-    words = text.lower().split()
-    # Filter out stopwords and short words (length <= 2)
-    filtered_words = [word for word in words if word not in stopwords and len(word) > 2]
-    # Count word frequency and select the top N
-    counter = Counter(filtered_words)
-    common = counter.most_common(top_n)
-    return [word for word, _ in common]
-
+    prompt = (
+        f"Extract the top {top_n} relevant keywords from the text below. "
+        "Return the keywords as a comma-separated list.\n\n"
+        f"{text}\n\n"
+        "Keywords:"
+    )
+    
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are an assistant that extracts keywords from text."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.3,
+            max_tokens=60,
+        )
+        keywords_str = response.choices[0].message.content.strip()
+        # Split by comma and remove extra whitespace
+        keywords = [k.strip() for k in keywords_str.split(",") if k.strip()]
+        return keywords
+    except Exception as e:
+        print("Error using OpenAI API:", e)
+        return []
 def get_google_ranking(keyword, domain, num_results=20):
     """
     Searches Google for the given keyword and returns the ranking position
@@ -77,7 +92,7 @@ def main(website_url):
     
     # Combine meta data to extract keywords
     combined_text = f"{title} {description} {meta_keywords}"
-    top_keywords = extract_keywords(combined_text, top_n=5)
+    top_keywords = extract_keywords_openai(combined_text, top_n=5)
     print("Top 5 Relevant Keywords:", top_keywords, "\n")
     
     # Extract the domain (e.g., example.com) from the URL

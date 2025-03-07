@@ -102,7 +102,7 @@ def extract(req: FetchRequest):
         combined_text = f"{title} {meta_keywords}"
         
         # Extract top keywords using OpenAI
-        top_keywords = extract_keywords(combined_text, top_n=5)
+        top_keywords = extract_keywords(combined_text)
         
         # Extract the domain (e.g., example.com) from the URL
         domain = re.sub(r'^https?://(www\.)?', '', website_url).split('/')[0]

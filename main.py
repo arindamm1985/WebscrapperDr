@@ -98,8 +98,8 @@ def extract(req: FetchRequest):
     
     try:
         # Fetch meta data
-        title, description, meta_keywords = fetch_meta_data(website_url)
-        combined_text = f"{title} {description} {meta_keywords}"
+        title, meta_keywords = fetch_meta_data(website_url)
+        combined_text = f"{title} {meta_keywords}"
         
         # Extract top keywords using OpenAI
         top_keywords = extract_keywords(combined_text, top_n=5)

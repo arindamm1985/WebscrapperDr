@@ -110,4 +110,4 @@ def main(website_url):
 if __name__ == "__main__":
     # Replace with the target website URL
     website = "https://www.mullerfirm.com/"
-    main(website)
+    

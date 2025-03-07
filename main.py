@@ -69,7 +69,7 @@ def extract_keywords_openai(text, top_n=5):
     except Exception as e:
         print("Error using OpenAI API:", e)
         return []
-def get_google_ranking(keyword, domain, num_results=200):
+def get_google_ranking(keyword, domain, num_results=20):
     """
     Searches Google for the given keyword and returns the ranking position
     of the website (if found within the top num_results).
@@ -80,6 +80,17 @@ def get_google_ranking(keyword, domain, num_results=200):
             if domain in result:
                 return idx + 1  # Rankings are 1-indexed
         return "Not Found"
+    except Exception as e:
+        return f"Error: {e}"
+
+def get_google_ranking_list(keyword, num_results=20):
+    """
+    Searches Google for the given keyword and returns the ranking position
+    of the website (if found within the top num_results).
+    """
+    try:
+        results = list(search(keyword, num_results=num_results))
+        return {search_result:result}
     except Exception as e:
         return f"Error: {e}"
 
@@ -104,7 +115,8 @@ def extract(req: FetchRequest):
         results = []
         for keyword in top_keywords:
             ranking = get_google_ranking(keyword, domain)
-            results.append({"keyword": keyword, "google_ranking": ranking})
+            resulitems = get_google_ranking_list(keyword)
+            results.append({"keyword": keyword, "google_ranking": ranking,"search_result":resulitems})
         
         response_payload = {
             "website": website_url,

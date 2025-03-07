@@ -1,14 +1,18 @@
-import requests
 import os
+import re
+import requests
+from flask import Flask, render_template, request
 from bs4 import BeautifulSoup
 from googlesearch import search  # Install with: pip install google
-import re
-from openai import OpenAI
-from collections import Counter
-import string
-openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+import openai
+
+app = Flask(__name__)
+
+# Set your OpenAI API key in your Render.com environment variable
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
 def fetch_meta_data(url):
-    """Fetch the title, meta description, and meta keywords from a website."""
+    """Fetches the title, meta description, and meta keywords from a website."""
     headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.get(url, headers=headers, timeout=10)
     soup = BeautifulSoup(response.text, "html.parser")
@@ -31,44 +35,38 @@ def fetch_meta_data(url):
     
     return title, description, meta_keywords
 
-# Define a basic list of stopwords
-stopwords = {
-    "the", "and", "is", "in", "to", "of", "a", "with", "for", "on", "that",
-    "by", "this", "it", "as", "at", "from", "an", "be", "are", "or", "we",
-    "you", "our", "us", "not", "have", "has"
-}
-
 def extract_keywords_openai(text, top_n=5):
     """
-    Uses OpenAI's standard Completion API to extract the top N relevant keywords
-    from the provided text. Returns a list of keywords.
+    Uses OpenAI's Completion API to extract the top N relevant keywords from the provided text.
+    Returns a list of keywords.
     """
     prompt = (
         f"Extract the top {top_n} relevant keywords from the following text. "
         "Return the keywords as a comma-separated list.\n\n"
         f"{text}\n\nKeywords:"
     )
-    
     try:
-        response =openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
+            temperature=0.3,
+            max_tokens=60,
+            n=1
         )
-        keywords_str = response.choices[0].message.content.strip()
-        # Split the comma-separated response into a list of keywords
+        keywords_str = response.choices[0].text.strip()
         keywords = [k.strip() for k in keywords_str.split(",") if k.strip()]
         return keywords
     except Exception as e:
         print("Error using OpenAI API:", e)
         return []
+
 def get_google_ranking(keyword, domain, num_results=20):
     """
     Searches Google for the given keyword and returns the ranking position
     of the website (if found within the top num_results).
     """
     try:
-        results = list(search(keyword, num_results=num_results))
+        results = list(search(keyword, num_results=num_results, stop=num_results, pause=2))
         for idx, result in enumerate(results):
             if domain in result:
                 return idx + 1  # Rankings are 1-indexed
@@ -76,38 +74,28 @@ def get_google_ranking(keyword, domain, num_results=20):
     except Exception as e:
         return f"Error: {e}"
 
-def main(website_url):
-    # Display website header
-    print(f"Website: {website_url}\n")
-    
-    # Fetch meta data from the website
-    title, description, meta_keywords = fetch_meta_data(website_url)
-    print(f"Title: {title}")
-    print(f"Description: {description}")
-    print(f"Meta Keywords: {meta_keywords}\n")
-    
-    # Combine meta data to extract keywords
-    combined_text = f"{title} {description} {meta_keywords}"
-    top_keywords = extract_keywords_openai(combined_text, top_n=5)
-    print("Top 5 Relevant Keywords:", top_keywords, "\n")
-    
-    # Extract the domain (e.g., example.com) from the URL
-    domain = re.sub(r'^https?://(www\.)?', '', website_url).split('/')[0]
-    
-    # Prepare results for each keyword
-    results = []
-    for keyword in top_keywords:
-        ranking = get_google_ranking(keyword, domain)
-        results.append({"Keyword": keyword, "Google Ranking": ranking})
-    
-    # Print final results in table format
-    print(f"Results for Website: {website_url}")
-    print("{:<20} {:<15}".format("Keyword", "Google Ranking"))
-    print("-" * 35)
-    for row in results:
-        print("{:<20} {:<15}".format(row["Keyword"], str(row["Google Ranking"])))
+@app.route("/", methods=["GET", "POST"])
+def index():
+    results = None
+    website_url = ""
+    meta_info = None
+    if request.method == "POST":
+        website_url = request.form.get("website_url")
+        if website_url:
+            try:
+                title, description, meta_keywords = fetch_meta_data(website_url)
+                meta_info = {"title": title, "description": description, "meta_keywords": meta_keywords}
+                combined_text = f"{title} {description} {meta_keywords}"
+                top_keywords = extract_keywords_openai(combined_text, top_n=5)
+                # Extract the domain (e.g., example.com) from the URL
+                domain = re.sub(r'^https?://(www\.)?', '', website_url).split('/')[0]
+                results = []
+                for keyword in top_keywords:
+                    ranking = get_google_ranking(keyword, domain)
+                    results.append({"Keyword": keyword, "Google Ranking": ranking})
+            except Exception as e:
+                results = [{"Keyword": "Error", "Google Ranking": str(e)}]
+    return render_template("index.html", website_url=website_url, meta_info=meta_info, results=results)
 
 if __name__ == "__main__":
-    # Replace with the target website URL
-    website = "https://www.mullerfirm.com/"
-    
+    app.run(debug=True)

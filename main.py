@@ -90,7 +90,7 @@ def get_google_ranking_list(keyword, num_results=20):
     """
     try:
         results = list(search(keyword, num_results=num_results))
-        return {search_result:result}
+        return {"search_result":result}
     except Exception as e:
         return f"Error: {e}"
 

@@ -75,7 +75,7 @@ def get_google_ranking(keyword, domain, num_results=20):
     of the website (if found within the top num_results).
     """
     try:
-        results = list(search(keyword, num_results=num_results))
+        results = list(search(keyword, num_results=num_results,region="in"))
         for idx, result in enumerate(results):
             if domain in result:
                 return idx + 1  # Rankings are 1-indexed
@@ -89,7 +89,7 @@ def get_google_ranking_list(keyword, num_results=20):
     of the website (if found within the top num_results).
     """
     try:
-        results = list(search(keyword, num_results=num_results))
+        results = list(search(keyword, num_results=num_results,region="in"))
         return {"search_result":results}
     except Exception as e:
         return f"Error: {e}"

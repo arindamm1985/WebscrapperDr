@@ -115,7 +115,6 @@ def extract(req: FetchRequest):
             "website": website_url,
             "meta": {
                 "title": title,
-                "description": description,
                 "meta_keywords": meta_keywords,
             },
             "top_keywords": top_keywords,

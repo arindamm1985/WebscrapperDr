@@ -99,7 +99,7 @@ def extract(req: FetchRequest):
     try:
         # Fetch meta data
         title, meta_keywords = fetch_meta_data(website_url)
-       top_keywords = extract_keywords(title, meta_keywords)
+        top_keywords = extract_keywords(title, meta_keywords)
         
         # Extract the domain (e.g., example.com) from the URL
         domain = re.sub(r'^https?://(www\.)?', '', website_url).split('/')[0]

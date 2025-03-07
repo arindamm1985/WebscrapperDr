@@ -80,7 +80,7 @@ def get_google_ranking(keyword, domain, num_results=20):
         return f"Error: {e}"
 
 @app.route("/api/fetch", methods=["POST"])
-async def def fetch():
+async def fetch():
     data = request.get_json()
     if not data or "website_url" not in data:
         return jsonify({"error": "Please provide a 'website_url' in JSON payload."}), 400

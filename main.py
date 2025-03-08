@@ -157,6 +157,7 @@ def extract(req: FetchRequest):
             "meta": {
                 "title": title,
                 "meta_keywords": meta_keywords,
+                "meta_description": meta_description,
             },
             "top_keywords": top_keywords,
             "rankings": results

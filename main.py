@@ -24,7 +24,9 @@ def fetch_meta_data(url):
     """
     Fetches the title, meta keywords, and meta description from a website.
     """
-    headers = {"User-Agent": "Mozilla/5.0"}
+    headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36'
+    }
     try:
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()

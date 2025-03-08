@@ -44,7 +44,7 @@ def fetch_meta_data(url):
     
     return title, meta_keywords, meta_description
 
-def extract_keywords(title, meta_keywords):
+def extract_keywords(title, meta_keywords,meta_description):
     """
     Extract candidate keywords by splitting the title and meta keywords.
     
@@ -105,7 +105,7 @@ def extract(req: FetchRequest):
     try:
         # Fetch meta data
         title, meta_keywords, meta_description = fetch_meta_data(website_url)
-        top_keywords = extract_keywords(title, meta_keywords)
+        top_keywords = extract_keywords(title, meta_keywords,meta_description)
         
         # Extract the domain (e.g., example.com) from the URL
         domain = re.sub(r'^https?://(www\.)?', '', website_url).split('/')[0]

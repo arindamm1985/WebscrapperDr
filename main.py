@@ -1,5 +1,7 @@
 import requests
 import nltk
+nltk.download('punkt_tab')
+nltk.download('averaged_perceptron_tagger')
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk import pos_tag, RegexpParser
 from fastapi import FastAPI, Header, HTTPException

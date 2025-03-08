@@ -52,6 +52,26 @@ def fetch_meta_data(url):
     
     return title, meta_keywords, meta_description
 
+def split_and_clean(text):
+    """
+    Helper function to split a string using both comma and pipe as separators,
+    then clean up whitespace.
+    """
+    # First, split by comma and pipe
+    parts = []
+    for sep in [',', '|']:
+        # If parts is empty, split the original text;
+        # otherwise, further split each current part.
+        if not parts:
+            parts = text.split(sep)
+        else:
+            new_parts = []
+            for part in parts:
+                new_parts.extend(part.split(sep))
+            parts = new_parts
+    # Clean up and filter out empty strings
+    return [p.strip() for p in parts if p.strip()]
+
 def extract_keywords(title, meta_keywords,meta_description):
     """
     Extract candidate keywords by splitting the title and meta keywords.
@@ -70,13 +90,53 @@ def extract_keywords(title, meta_keywords,meta_description):
                 if keyword and keyword not in keywords:
                     keywords.append(keyword)
 
+    """
+    Extract candidate keywords by processing:
+      1. The title (split by '|' and ',')
+      2. Meta keywords (split by ',' and '|')
+      3. Main objects (noun phrases) extracted from the combined title and meta description.
+      
+    Additional processing:
+      - Further split any keyword that contains commas or pipes.
+      - Remove undesired keywords such as standalone locations (e.g., "Michigan")
+        or fillers (e.g., "a").
+      - Ensure uniqueness ignoring case.
+    """
+    keywords_set = {}
+    
+    def add_keyword(kw):
+        kw_clean = kw.strip()
+        if not kw_clean:
+            return
+        lower_kw = kw_clean.lower()
+        # Remove undesired standalone tokens (modify the set as needed)
+        if lower_kw in {"michigan", "a"}:
+            return
+        # Remove keywords that are too short (could be noise)
+        if len(kw_clean) < 2:
+            return
+        # Use the lower case version as key to ensure uniqueness
+        if lower_kw not in keywords_set:
+            keywords_set[lower_kw] = kw_clean
+    
+    # Process title: split by both ',' and '|'
+    if title:
+        for part in split_and_clean(title):
+            add_keyword(part)
+    
+    # Process meta keywords: split by both ',' and '|'
+    if meta_keywords:
+        for part in split_and_clean(meta_keywords):
+            add_keyword(part)
+    
+    # Combine title and meta description for noun phrase extraction
     combined_text = ""
     if title:
         combined_text += title + " "
     if meta_description:
         combined_text += meta_description
     
-    # Extract key noun phrases (main objects) using a simple grammar
+    # Extract noun phrases (main objects) using a simple grammar
     sentences = sent_tokenize(combined_text)
     grammar = "NP: {<DT>?<JJ>*<NN.*>+}"
     cp = RegexpParser(grammar)
@@ -88,16 +148,15 @@ def extract_keywords(title, meta_keywords,meta_description):
         tree = cp.parse(tagged)
         for subtree in tree.subtrees():
             if subtree.label() == 'NP':
-                # Reconstruct the phrase from the leaves
                 phrase = " ".join(word for word, tag in subtree.leaves())
-                # Filter out single-word phrases to avoid noise
+                # Only keep phrases with more than one word to avoid noise
                 if len(phrase.split()) > 1:
                     extracted_objects.add(phrase)
     
-    # Append the extracted main objects to the keywords list if they are unique
+    # Further process extracted noun phrases by splitting on commas and pipes
     for phrase in extracted_objects:
-        if phrase not in keywords:
-            keywords.append(phrase)
+        for sub in split_and_clean(phrase):
+            add_keyword(sub)
                     
     # Process meta keywords: split by ','
     if meta_keywords:
@@ -106,7 +165,7 @@ def extract_keywords(title, meta_keywords,meta_description):
             if keyword and keyword not in keywords:
                 keywords.append(keyword)
     
-    return keywords
+    return list(keywords_set.values())
     
 def get_google_ranking(keyword, domain, num_results=20):
     """

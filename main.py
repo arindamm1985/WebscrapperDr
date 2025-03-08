@@ -173,25 +173,37 @@ def get_google_ranking(keyword, domain, num_results=20):
     of the website (if found within the top num_results).
     """
     try:
-        results = list(search(keyword, num_results=num_results,region="in"))
+        results = list(search(keyword, num_results=num_results,region="us"))
         for idx, result in enumerate(results):
             if domain in result:
                 return idx + 1  # Rankings are 1-indexed
-        return "Not Found"
+        return "Above 20"
     except Exception as e:
         return f"Error: {e}"
 
-def get_google_ranking_list(keyword, num_results=20):
+def get_google_ranking_list(keyword, num_results=10):
     """
-    Searches Google for the given keyword and returns the ranking position
-    of the website (if found within the top num_results).
+    Searches Google for the given keyword and returns a list of domain names
+    extracted from the search results (limited to the top num_results).
     """
     try:
-        results = list(search(keyword, num_results=num_results,region="in"))
-        return {"search_result":results}
+        results = list(search(keyword, num_results=num_results, region="us"))
+        domains = []
+        for result in results:
+            url = ""
+            # If the result is a string, assume it's a URL.
+            if isinstance(result, str):
+                url = result
+            # If the result is a dictionary, try to extract the "url" key.
+            elif isinstance(result, dict) and "url" in result:
+                url = result["url"]
+            if url:
+                domain = urlparse(url).netloc
+                if domain:
+                    domains.append(domain)
+        return {"search_result": domains}
     except Exception as e:
         return f"Error: {e}"
-
 @app.post("/api/fetch")
 def extract(req: FetchRequest):
 

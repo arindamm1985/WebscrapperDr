@@ -16,7 +16,7 @@ class FetchRequest(BaseModel):
     website_url: str
 def fetch_meta_data(url):
     """
-    Fetches the title and meta keywords from a website.
+    Fetches the title, meta keywords, and meta description from a website.
     """
     headers = {"User-Agent": "Mozilla/5.0"}
     try:
@@ -36,7 +36,13 @@ def fetch_meta_data(url):
     if meta_kw and meta_kw.get("content"):
         meta_keywords = meta_kw["content"].strip()
     
-    return title, meta_keywords
+    # Extract meta description
+    meta_description = ""
+    meta_desc = soup.find("meta", attrs={"name": "description"})
+    if meta_desc and meta_desc.get("content"):
+        meta_description = meta_desc["content"].strip()
+    
+    return title, meta_keywords, meta_description
 
 def extract_keywords(title, meta_keywords):
     """
@@ -98,7 +104,7 @@ def extract(req: FetchRequest):
     
     try:
         # Fetch meta data
-        title, meta_keywords = fetch_meta_data(website_url)
+        title, meta_keywords, meta_description = fetch_meta_data(website_url)
         top_keywords = extract_keywords(title, meta_keywords)
         
         # Extract the domain (e.g., example.com) from the URL

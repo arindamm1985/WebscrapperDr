@@ -7,3 +7,4 @@ fastapi
 uvicorn[standard]
 python-dotenv
 pydantic
+nltk

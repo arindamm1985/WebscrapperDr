@@ -1,4 +1,7 @@
 import requests
+import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk import pos_tag, RegexpParser
 from fastapi import FastAPI, Header, HTTPException
 import os
 import uvicorn
@@ -61,6 +64,35 @@ def extract_keywords(title, meta_keywords,meta_description):
                 keyword = subpart.strip()
                 if keyword and keyword not in keywords:
                     keywords.append(keyword)
+
+    combined_text = ""
+    if title:
+        combined_text += title + " "
+    if meta_description:
+        combined_text += meta_description
+    
+    # Extract key noun phrases (main objects) using a simple grammar
+    sentences = sent_tokenize(combined_text)
+    grammar = "NP: {<DT>?<JJ>*<NN.*>+}"
+    cp = RegexpParser(grammar)
+    extracted_objects = set()
+    
+    for sentence in sentences:
+        tokens = word_tokenize(sentence)
+        tagged = pos_tag(tokens)
+        tree = cp.parse(tagged)
+        for subtree in tree.subtrees():
+            if subtree.label() == 'NP':
+                # Reconstruct the phrase from the leaves
+                phrase = " ".join(word for word, tag in subtree.leaves())
+                # Filter out single-word phrases to avoid noise
+                if len(phrase.split()) > 1:
+                    extracted_objects.add(phrase)
+    
+    # Append the extracted main objects to the keywords list if they are unique
+    for phrase in extracted_objects:
+        if phrase not in keywords:
+            keywords.append(phrase)
                     
     # Process meta keywords: split by ','
     if meta_keywords:
